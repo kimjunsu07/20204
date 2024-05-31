@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Shooting Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background-color: #f0f0f0;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Player
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 30,
+            width: 50,
+            height: 50,
+            color: '#0095DD',
+            speed: 5
+        };
+
+        // Bullet
+        const bullet = {
+            x: player.x + player.width / 2 - 2.5,
+            y: player.y,
+            width: 5,
+            height: 10,
+            color: '#0095DD',
+            speed: 8,
+            visible: false
+        };
+
+        // Enemy
+        let enemies = [];
+        const enemyWidth = 50;
+        const enemyHeight = 50;
+        const enemySpeed = 1;
+
+        // Event listeners
+        document.addEventListener('keydown', keyDownHandler, false);
+        document.addEventListener('keyup', keyUpHandler, false);
+
+        // Functions
+        function keyDownHandler(e) {
+            if (e.key === 'Right' || e.key === 'ArrowRight') {
+                player.moveRight = true;
+            } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
+                player.moveLeft = true;
+            } else if (e.key === ' ') {
+                shoot();
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key === 'Right' || e.key === 'ArrowRight') {
+                player.moveRight = false;
+            } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
+                player.moveLeft = false;
+            }
+        }
+
+        function drawPlayer() {
+            ctx.beginPath();
+            ctx.rect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBullet() {
+            if (bullet.visible) {
+                ctx.beginPath();
+                ctx.rect(bullet.x, bullet.y, bullet.width, bullet.height);
+                ctx.fillStyle = bullet.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.beginPath();
+                ctx.rect(enemy.x, enemy.y, enemyWidth, enemyHeight);
+                ctx.fillStyle = enemy.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function movePlayer() {
+            if (player.moveRight && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            } else if (player.moveLeft && player.x > 0) {
+                player.x -= player.speed;
+            }
+        }
+
+        function moveBullet() {
+            if (bullet.visible) {
+                bullet.y -= bullet.speed;
+                if (bullet.y < 0) {
+                    bullet.visible = false;
+                }
+            }
+        }
+
+        function createEnemy() {
+            const enemy = {
+                x: Math.random() * (canvas.width - enemyWidth),
+                y: 0,
+                width: enemyWidth,
+                height: enemyHeight,
+                speed: enemySpeed,
+                color: getRandomColor()
+            };
+            enemies.push(enemy);
+        }
+
+        function moveEnemies() {
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.speed;
+                if (enemy.y > canvas.height) {
+                    enemies.splice(index, 1);
+                }
+            });
+        }
+
+        function shoot() {
+            if (!bullet.visible) {
+                bullet.x = player.x + player.width / 2 - bullet.width / 2;
+                bullet.y = player.y;
+                bullet.visible = true;
+            }
+        }
+
+        function collisionDetection() {
+            enemies.forEach((enemy, enemyIndex) => {
+                if (
+                    bullet.visible &&
+                    bullet.x < enemy.x + enemyWidth &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemyHeight &&
+                    bullet.y + bullet.height > enemy.y
+                ) {
+                    enemies.splice(enemyIndex, 1);
+                    bullet.visible = false;
+                }
+            });
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawBullet();
+            drawEnemies();
+            movePlayer();
+            moveBullet();
+            moveEnemies();
+            collisionDetection();
+            requestAnimationFrame(draw);
+        }
+
+        setInterval(createEnemy, 1000);
+        draw();
+    </script>
+</body>
+</html>
